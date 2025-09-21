@@ -9,6 +9,10 @@ import StatsCards from '../components/StatsCards';
 import AlertsPanel from '../components/AlertsPanel';
 import TouristsPanel from '../components/TouristsPanel';
 import MapPanel from '../components/MapPanel';
+import QuickActions from '../components/QuickActions';
+import UserManagement from '../components/UserManagement';
+import SystemStatus from '../components/SystemStatus';
+import RecentActivity from '../components/RecentActivity';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -169,6 +173,31 @@ const Dashboard: React.FC = () => {
           {/* Right Column - Tourists */}
           <div className="col-lg-3 mb-4">
             <TouristsPanel tourists={tourists} />
+          </div>
+        </div>
+
+        {/* Additional Admin Sections */}
+        <div className="row">
+          {/* Quick Actions */}
+          <div className="col-lg-4 mb-4">
+            <QuickActions onRefresh={loadDashboardData} />
+          </div>
+
+          {/* User Management */}
+          <div className="col-lg-4 mb-4">
+            <UserManagement onRefresh={loadDashboardData} />
+          </div>
+
+          {/* System Status */}
+          <div className="col-lg-4 mb-4">
+            <SystemStatus onRefresh={loadDashboardData} />
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="row">
+          <div className="col-12 mb-4">
+            <RecentActivity />
           </div>
         </div>
       </div>
