@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -19,21 +19,7 @@ const Dashboard: React.FC = () => {
   const [tourists, setTourists] = useState<Tourist[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    loadDashboardData();
-    startAutoRefresh();
-    setupWebSocketListeners();
-
-    return () => {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-      }
-    };
-  }, []);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -59,35 +45,49 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
 
-  const startAutoRefresh = () => {
+  // Load initial data and setup auto-refresh
+  useEffect(() => {
+    loadDashboardData();
+    
     const interval = setInterval(() => {
       loadDashboardData();
     }, 30000); // Refresh every 30 seconds
 
-    setRefreshInterval(interval);
-  };
+    return () => {
+      clearInterval(interval);
+    };
+  }, [loadDashboardData]);
 
-  const setupWebSocketListeners = () => {
-    // Listen for tourist location updates
-    onTouristLocationUpdate((updatedTourist: Tourist) => {
+  // Setup WebSocket listeners
+  useEffect(() => {
+    if (!onTouristLocationUpdate || !onAnomalyAlert || !onZoneViolationAlert) return;
+
+    const handleTouristUpdate = (updatedTourist: Tourist) => {
       setTourists(prev => 
         prev.map(tourist => 
           tourist.id === updatedTourist.id ? updatedTourist : tourist
         )
       );
-    });
+    };
 
-    // Listen for new alerts
-    onAnomalyAlert((newAlert: Alert) => {
+    const handleAnomalyAlert = (newAlert: Alert) => {
       setAlerts(prev => [newAlert, ...prev]);
-    });
+    };
 
-    onZoneViolationAlert((newAlert: Alert) => {
+    const handleZoneViolationAlert = (newAlert: Alert) => {
       setAlerts(prev => [newAlert, ...prev]);
-    });
-  };
+    };
+
+    onTouristLocationUpdate(handleTouristUpdate);
+    onAnomalyAlert(handleAnomalyAlert);
+    onZoneViolationAlert(handleZoneViolationAlert);
+
+    return () => {
+      // Cleanup would require off functions from WebSocket context
+    };
+  }, [onTouristLocationUpdate, onAnomalyAlert, onZoneViolationAlert]);
 
   const handleAlertResolve = async (alertId: string) => {
     try {

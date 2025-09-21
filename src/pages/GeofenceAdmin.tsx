@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -18,12 +18,7 @@ const GeofenceAdmin: React.FC = () => {
   const [selectedZone, setSelectedZone] = useState<GeofenceZone | null>(null);
   const [isDrawMode, setIsDrawMode] = useState(false);
 
-  useEffect(() => {
-    loadGeofenceZones();
-    setupWebSocketListeners();
-  }, []);
-
-  const loadGeofenceZones = async () => {
+  const loadGeofenceZones = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getGeofenceZones();
@@ -38,18 +33,32 @@ const GeofenceAdmin: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
 
-  const setupWebSocketListeners = () => {
-    onZoneUpdate((updatedZone: GeofenceZone) => {
+  // Load initial data
+  useEffect(() => {
+    loadGeofenceZones();
+  }, [loadGeofenceZones]);
+
+  // Setup WebSocket listeners
+  useEffect(() => {
+    if (!onZoneUpdate) return;
+
+    const handleZoneUpdate = (updatedZone: GeofenceZone) => {
       setZones(prev => 
         prev.map(zone => 
           zone.id === updatedZone.id ? updatedZone : zone
         ).filter((zone): zone is GeofenceZone => zone !== undefined)
       );
       showNotification(`Zone "${updatedZone.name}" has been updated`, 'info');
-    });
-  };
+    };
+
+    onZoneUpdate(handleZoneUpdate);
+
+    return () => {
+      // Cleanup would require off functions from WebSocket context
+    };
+  }, [onZoneUpdate, showNotification]);
 
   const handleCreateZone = async (zoneData: Omit<GeofenceZone, 'id' | 'created_at' | 'created_by'>) => {
     if (!hasPermission('can_modify_geofences')) {

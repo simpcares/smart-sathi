@@ -1,7 +1,7 @@
 // WebSocket Context for Tourist Safety Monitoring System
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
-import type { WebSocketEvent, Tourist, Alert, GeofenceZone } from '../types';
+import type { Tourist, Alert, GeofenceZone } from '../types';
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
 
@@ -36,41 +36,15 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const maxReconnectAttempts = 10;
   const reconnectInterval = 5000;
 
-  useEffect(() => {
-    if (isAuthenticated() && user) {
-      initializeWebSocket();
-    } else {
-      disconnectWebSocket();
-    }
-
-    return () => {
-      disconnectWebSocket();
-    };
-  }, [user, isAuthenticated]);
-
-  const initializeWebSocket = () => {
-    try {
-      const newSocket = io(WEBSOCKET_URL, {
-        autoConnect: true,
-        transports: ['websocket', 'polling'],
-      });
-
-      setSocket(newSocket);
-      setupSocketEventHandlers(newSocket);
-    } catch (error) {
-      console.error('Failed to initialize WebSocket:', error);
-    }
-  };
-
-  const disconnectWebSocket = () => {
+  const disconnectWebSocket = useCallback(() => {
     if (socket) {
       socket.disconnect();
       setSocket(null);
       setConnected(false);
     }
-  };
+  }, [socket]);
 
-  const setupSocketEventHandlers = (socketInstance: Socket) => {
+  const setupSocketEventHandlers = useCallback((socketInstance: Socket) => {
     // Connection events
     socketInstance.on('connect', () => {
       console.log('Connected to WebSocket server');
@@ -118,9 +92,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         );
       }
     });
-  };
+  }, [reconnectAttempts, maxReconnectAttempts, reconnectInterval, showNotification, setReconnectAttempts]);
 
-  const joinDashboardRoom = (socketInstance: Socket) => {
+  const joinDashboardRoom = useCallback((socketInstance: Socket) => {
     const currentPath = window.location.pathname;
     
     // Join appropriate dashboard room based on current path
@@ -148,7 +122,34 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         console.log('Joined police dashboard room:', data);
       });
     }
-  };
+  }, [user]);
+
+  const initializeWebSocket = useCallback(() => {
+    try {
+      const newSocket = io(WEBSOCKET_URL, {
+        autoConnect: true,
+        transports: ['websocket', 'polling'],
+      });
+
+      setSocket(newSocket);
+      setupSocketEventHandlers(newSocket);
+    } catch (error) {
+      console.error('Failed to initialize WebSocket:', error);
+    }
+  }, [setupSocketEventHandlers]);
+
+  useEffect(() => {
+    if (isAuthenticated() && user) {
+      initializeWebSocket();
+    } else {
+      disconnectWebSocket();
+    }
+
+    return () => {
+      disconnectWebSocket();
+    };
+  }, [user, isAuthenticated, initializeWebSocket, disconnectWebSocket]);
+
 
   // Event listener registration methods
   const onTouristLocationUpdate = (callback: (data: Tourist) => void) => {

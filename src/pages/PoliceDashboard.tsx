@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -15,19 +15,7 @@ const PoliceDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeAlerts, setActiveAlerts] = useState<Alert[]>([]);
 
-  useEffect(() => {
-    loadPoliceData();
-    setupWebSocketListeners();
-  }, []);
-
-  useEffect(() => {
-    // Filter active alerts
-    setActiveAlerts(alerts.filter(alert => 
-      alert.status === 'active' && (alert.severity === 'high' || alert.severity === 'critical')
-    ));
-  }, [alerts]);
-
-  const loadPoliceData = async () => {
+  const loadPoliceData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -48,18 +36,26 @@ const PoliceDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showNotification]);
 
-  const setupWebSocketListeners = () => {
-    onTouristLocationUpdate((updatedTourist: Tourist) => {
+  // Load initial data
+  useEffect(() => {
+    loadPoliceData();
+  }, [loadPoliceData]);
+
+  // Setup WebSocket listeners
+  useEffect(() => {
+    if (!onTouristLocationUpdate || !onAnomalyAlert || !onZoneViolationAlert) return;
+
+    const handleTouristUpdate = (updatedTourist: Tourist) => {
       setTourists(prev => 
         prev.map(tourist => 
           tourist.id === updatedTourist.id ? updatedTourist : tourist
         )
       );
-    });
+    };
 
-    onAnomalyAlert((newAlert: Alert) => {
+    const handleAnomalyAlert = (newAlert: Alert) => {
       setAlerts(prev => [newAlert, ...prev]);
       if (newAlert.severity === 'high' || newAlert.severity === 'critical') {
         showNotification(
@@ -68,17 +64,32 @@ const PoliceDashboard: React.FC = () => {
           0 // Don't auto-dismiss
         );
       }
-    });
+    };
 
-    onZoneViolationAlert((newAlert: Alert) => {
+    const handleZoneViolationAlert = (newAlert: Alert) => {
       setAlerts(prev => [newAlert, ...prev]);
       showNotification(
         `Zone Violation: ${newAlert.message}`,
         'warning',
         8000
       );
-    });
-  };
+    };
+
+    onTouristLocationUpdate(handleTouristUpdate);
+    onAnomalyAlert(handleAnomalyAlert);
+    onZoneViolationAlert(handleZoneViolationAlert);
+
+    return () => {
+      // Cleanup would require off functions from WebSocket context
+    };
+  }, [onTouristLocationUpdate, onAnomalyAlert, onZoneViolationAlert, showNotification]);
+
+  useEffect(() => {
+    // Filter active alerts
+    setActiveAlerts(alerts.filter(alert => 
+      alert.status === 'active' && (alert.severity === 'high' || alert.severity === 'critical')
+    ));
+  }, [alerts]);
 
   const emergencyTourists = tourists.filter(tourist => 
     tourist.current_status === 'emergency' || tourist.current_status === 'danger'
