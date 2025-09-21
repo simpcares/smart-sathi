@@ -25,6 +25,7 @@ const App: React.FC = () => {
         {/* Public routes */}
         <Route path="/login" element={user ? <Navigate to="/admin" /> : <Login />} />
         <Route path="/tourist-registration" element={<TouristRegistration />} />
+        <Route path="/tourist/register" element={<TouristRegistration />} />
         
         {/* Protected routes */}
         <Route path="/admin" element={

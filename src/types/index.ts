@@ -83,6 +83,7 @@ export interface APIResponse<T = any> {
 export interface LoginCredentials {
   username: string;
   password: string;
+  accessType?: 'admin' | 'police';
 }
 
 export interface AuthToken {

@@ -46,7 +46,13 @@ class ApiService {
   // Authentication endpoints
   async login(credentials: LoginCredentials): Promise<APIResponse<{ token: string; user: User }>> {
     try {
-      const response: AxiosResponse = await this.client.post('/auth/admin/login', credentials);
+      // Determine the login endpoint based on access type
+      const endpoint = credentials.accessType === 'police' ? '/auth/police/login' : '/auth/admin/login';
+      
+      const response: AxiosResponse = await this.client.post(endpoint, {
+        username: credentials.username,
+        password: credentials.password
+      });
       
       const data = response.data;
       if (data.token) {
@@ -57,8 +63,8 @@ class ApiService {
             user: {
               id: data.user_id,
               username: data.username || credentials.username,
-              email: data.email || `${credentials.username}@admin.local`,
-              role: data.role || 'admin',
+              email: data.email || `${credentials.username}@${credentials.accessType || 'admin'}.local`,
+              role: data.role || credentials.accessType || 'admin',
               permissions: data.permissions || {}
             }
           }
