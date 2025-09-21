@@ -44,6 +44,36 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
   }, [socket]);
 
+  const joinDashboardRoom = useCallback((socketInstance: Socket) => {
+    const currentPath = window.location.pathname;
+    
+    // Join appropriate dashboard room based on current path
+    if (currentPath.includes('/admin') || currentPath.includes('/dashboard') || currentPath.includes('/geofence')) {
+      socketInstance.emit('join_admin_dashboard', {
+        user_data: {
+          username: user?.username,
+          role: user?.role
+        }
+      });
+
+      // Listen for confirmation
+      socketInstance.on('admin_dashboard_joined', (data) => {
+        console.log('Joined admin dashboard room:', data);
+      });
+    } else if (currentPath.includes('/police')) {
+      socketInstance.emit('join_police_dashboard', {
+        user_data: {
+          username: user?.username,
+          badge_number: (user as any)?.badge_number || 'unknown'
+        }
+      });
+
+      socketInstance.on('police_dashboard_joined', (data) => {
+        console.log('Joined police dashboard room:', data);
+      });
+    }
+  }, [user]);
+
   const setupSocketEventHandlers = useCallback((socketInstance: Socket) => {
     // Connection events
     socketInstance.on('connect', () => {
@@ -92,37 +122,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         );
       }
     });
-  }, [reconnectAttempts, maxReconnectAttempts, reconnectInterval, showNotification, setReconnectAttempts]);
-
-  const joinDashboardRoom = useCallback((socketInstance: Socket) => {
-    const currentPath = window.location.pathname;
-    
-    // Join appropriate dashboard room based on current path
-    if (currentPath.includes('/admin') || currentPath.includes('/dashboard') || currentPath.includes('/geofence')) {
-      socketInstance.emit('join_admin_dashboard', {
-        user_data: {
-          username: user?.username,
-          role: user?.role
-        }
-      });
-
-      // Listen for confirmation
-      socketInstance.on('admin_dashboard_joined', (data) => {
-        console.log('Joined admin dashboard room:', data);
-      });
-    } else if (currentPath.includes('/police')) {
-      socketInstance.emit('join_police_dashboard', {
-        user_data: {
-          username: user?.username,
-          badge_number: (user as any)?.badge_number || 'unknown'
-        }
-      });
-
-      socketInstance.on('police_dashboard_joined', (data) => {
-        console.log('Joined police dashboard room:', data);
-      });
-    }
-  }, [user]);
+  }, [reconnectAttempts, maxReconnectAttempts, reconnectInterval, showNotification, setReconnectAttempts, joinDashboardRoom]);
 
   const initializeWebSocket = useCallback(() => {
     try {
