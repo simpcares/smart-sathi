@@ -2,7 +2,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import type { APIResponse, LoginCredentials, User, Tourist, Alert, GeofenceZone, DashboardStats } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Use environment variable for API URL, fallback to production backend
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://tourist-backend-latest.onrender.com';
 
 class ApiService {
   private client: AxiosInstance;
@@ -10,7 +11,7 @@ class ApiService {
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 10000,
+      timeout: 15000, // Increased timeout for production
       headers: {
         'Content-Type': 'application/json',
       },
@@ -46,12 +47,11 @@ class ApiService {
   // Authentication endpoints
   async login(credentials: LoginCredentials): Promise<APIResponse<{ token: string; user: User }>> {
     try {
-      // Determine the login endpoint based on access type
-      const endpoint = credentials.accessType === 'police' ? '/auth/police/login' : '/auth/admin/login';
-      
-      const response: AxiosResponse = await this.client.post(endpoint, {
+      // Use the unified API login endpoint
+      const response: AxiosResponse = await this.client.post('/api/auth/login', {
         username: credentials.username,
-        password: credentials.password
+        password: credentials.password,
+        user_type: credentials.accessType || 'admin'
       });
       
       const data = response.data;
@@ -64,8 +64,14 @@ class ApiService {
               id: data.user_id,
               username: data.username || credentials.username,
               email: data.email || `${credentials.username}@${credentials.accessType || 'admin'}.local`,
-              role: data.role || credentials.accessType || 'admin',
-              permissions: data.permissions || {}
+              role: data.user_type || credentials.accessType || 'admin',
+              permissions: {
+                can_view_sensitive_data: true,
+                can_modify_geofences: data.user_type === 'admin',
+                can_manage_users: data.user_type === 'admin',
+                can_access_system_logs: data.user_type === 'admin',
+                can_modify_restricted_zones: data.user_type === 'admin'
+              }
             }
           }
         };
@@ -85,7 +91,7 @@ class ApiService {
 
   async logout(): Promise<void> {
     try {
-      await this.client.post('/auth/logout');
+      await this.client.post('/api/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -98,15 +104,29 @@ class ApiService {
   async getDashboardStats(): Promise<APIResponse<DashboardStats>> {
     try {
       const response = await this.client.get('/api/dashboard/stats');
-      if (response.data.success) {
+      
+      // Handle both old and new response formats
+      const data = response.data;
+      
+      if (data.success !== false) {
+        const stats: DashboardStats = {
+          total_tourists: data.total_tourists || 0,
+          active_tourists: data.active_tourists || 0,
+          active_alerts: data.critical_alerts || data.active_alerts || 0,
+          critical_alerts: data.critical_alerts || 0,
+          zones_count: data.active_zones || data.zones_count || 0,
+          avg_safety_score: 85 // Default value since not in backend response
+        };
+        
         return {
           success: true,
-          data: response.data.data
+          data: stats
         };
       }
+      
       return {
         success: false,
-        error: response.data.error || 'Failed to fetch dashboard stats'
+        error: data.error || 'Failed to fetch dashboard stats'
       };
     } catch (error: any) {
       return {
@@ -119,12 +139,36 @@ class ApiService {
   async getTourists(): Promise<APIResponse<Tourist[]>> {
     try {
       const response = await this.client.get('/api/dashboard/tourist-locations');
-      if (response.data.success) {
+      
+      if (response.data.success !== false) {
+        const locations = response.data.locations || [];
+        
+        // Transform backend data to frontend format
+        const tourists: Tourist[] = locations.map((location: any) => ({
+          id: location.tourist_id,
+          phone_number: location.phone_number || 'N/A',
+          registration_timestamp: location.timestamp,
+          emergency_contact_phone: 'N/A',
+          location_history: [{
+            latitude: location.latitude,
+            longitude: location.longitude,
+            timestamp: location.timestamp,
+            accuracy: 10,
+            zone_type: 'safe',
+            safety_score: 85
+          }],
+          safety_score: 85,
+          current_status: location.status || 'safe',
+          current_zone_type: 'safe',
+          last_updated: location.timestamp
+        }));
+        
         return {
           success: true,
-          data: response.data.data?.tourists || []
+          data: tourists
         };
       }
+      
       return {
         success: false,
         error: response.data.error || 'Failed to fetch tourists'
@@ -140,12 +184,34 @@ class ApiService {
   async getAlerts(): Promise<APIResponse<Alert[]>> {
     try {
       const response = await this.client.get('/api/dashboard/alerts');
-      if (response.data.success) {
+      
+      if (response.data.success !== false) {
+        const alertsData = response.data.alerts || [];
+        
+        // Transform backend data to frontend format
+        const alerts: Alert[] = alertsData.map((alert: any) => ({
+          id: alert.id.toString(),
+          tourist_id: alert.tourist_id,
+          alert_type: alert.type || alert.anomaly_type || 'general',
+          severity: alert.severity || 'medium',
+          message: alert.description || alert.message || 'Alert detected',
+          created_at: alert.timestamp,
+          status: alert.is_resolved ? 'resolved' : 'active',
+          location: alert.location ? {
+            latitude: alert.location.lat,
+            longitude: alert.location.lng,
+            timestamp: alert.timestamp,
+            accuracy: 10
+          } : undefined,
+          additional_data: {}
+        }));
+        
         return {
           success: true,
-          data: response.data.data?.alerts || []
+          data: alerts
         };
       }
+      
       return {
         success: false,
         error: response.data.error || 'Failed to fetch alerts'
@@ -283,6 +349,22 @@ class ApiService {
       return {
         success: false,
         error: error.response?.data?.error || 'Failed to fetch tourist location'
+      };
+    }
+  }
+
+  // Health check
+  async healthCheck(): Promise<APIResponse> {
+    try {
+      const response = await this.client.get('/health');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Health check failed'
       };
     }
   }

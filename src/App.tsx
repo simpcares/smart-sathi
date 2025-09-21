@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import GeofenceAdmin from './pages/GeofenceAdmin';
 import PoliceDashboard from './pages/PoliceDashboard';
 import TouristRegistration from './pages/TouristRegistration';
+import EmergencyReset from './pages/EmergencyReset';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 import NotificationContainer from './components/NotificationContainer';
@@ -26,6 +27,7 @@ const App: React.FC = () => {
         <Route path="/login" element={user ? <Navigate to="/admin" /> : <Login />} />
         <Route path="/tourist-registration" element={<TouristRegistration />} />
         <Route path="/tourist/register" element={<TouristRegistration />} />
+        <Route path="/auth/admin/emergency-reset" element={<EmergencyReset />} />
         
         {/* Protected routes */}
         <Route path="/admin" element={

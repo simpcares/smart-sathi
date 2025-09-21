@@ -24,7 +24,8 @@ interface WebSocketProviderProps {
   children: ReactNode;
 }
 
-const WEBSOCKET_URL = process.env.REACT_APP_WS_URL || 'http://localhost:5000';
+// Use environment variable for WebSocket URL, fallback to production backend
+const WEBSOCKET_URL = process.env.REACT_APP_WS_URL || 'https://tourist-backend-latest.onrender.com';
 
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -129,6 +130,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       const newSocket = io(WEBSOCKET_URL, {
         autoConnect: true,
         transports: ['websocket', 'polling'],
+        timeout: 20000,
+        forceNew: true,
+        reconnection: true,
+        reconnectionAttempts: maxReconnectAttempts,
+        reconnectionDelay: reconnectInterval,
       });
 
       setSocket(newSocket);
@@ -136,7 +142,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     } catch (error) {
       console.error('Failed to initialize WebSocket:', error);
     }
-  }, [setupSocketEventHandlers]);
+  }, [setupSocketEventHandlers, maxReconnectAttempts, reconnectInterval]);
 
   useEffect(() => {
     if (isAuthenticated() && user) {

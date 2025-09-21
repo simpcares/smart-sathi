@@ -15,8 +15,20 @@
       "dest": "/static/$1"
     },
     {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://tourist-backend-latest.onrender.com",
+    "REACT_APP_WS_URL": "https://tourist-backend-latest.onrender.com"
+  }
 }
