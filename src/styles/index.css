@@ -1,0 +1,214 @@
+/* Tourist Safety Monitoring System - Global Styles */
+
+:root {
+  /* Modern Color Palette - Safety/Security Theme */
+  --primary: #2563EB;
+  --primary-700: #1D4ED8;
+  --primary-800: #1E40AF;
+  --success: #10B981;
+  --success-700: #059669;
+  --warning: #F59E0B;
+  --warning-700: #D97706;
+  --danger: #DC2626;
+  --danger-700: #B91C1C;
+  --info: #06B6D4;
+  --info-700: #0891B2;
+  --restricted: #fd7e14;
+  --military: #6f42c1;
+  
+  /* Surface Colors */
+  --bg-0: #0B1220;
+  --surface-1: #0F172A;
+  --surface-2: #111827;
+  --surface-3: #1F2937;
+  --border: #374151;
+  --border-light: rgba(255, 255, 255, 0.06);
+  --text-muted: #94A3B8;
+  --text-primary: #F1F5F9;
+  
+  /* Spacing Scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  
+  /* Elevation & Effects */
+  --elev-1: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --elev-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --elev-3: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --blur: 8px;
+  --border-radius: 0.75rem;
+  --border-radius-lg: 1rem;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Ring Focus */
+  --ring-primary: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  --ring-success: 0 0 0 3px rgba(16, 185, 129, 0.35);
+  --ring-warning: 0 0 0 3px rgba(245, 158, 11, 0.35);
+  --ring-danger: 0 0 0 3px rgba(220, 38, 38, 0.35);
+}
+
+/* Global Styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
+  color: var(--text-primary);
+  font-weight: 400;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Beautiful Background with Gradients */
+body.app-bg {
+  background: 
+    radial-gradient(1200px 800px at 80% -10%, rgba(37, 99, 235, 0.15), transparent 60%),
+    radial-gradient(900px 600px at -10% 90%, rgba(16, 185, 129, 0.12), transparent 55%),
+    var(--bg-0);
+  min-height: 100vh;
+}
+
+/* Enhanced Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.5rem; }  
+h3 { font-size: 1.25rem; }
+
+/* App Container */
+.app {
+  min-height: 100vh;
+}
+
+/* Notification Container */
+.notification-container {
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+/* Utility Classes */
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.text-primary {
+  color: var(--text-primary) !important;
+}
+
+/* Bootstrap overrides for dark theme */
+.bg-dark {
+  background-color: var(--surface-1) !important;
+}
+
+.bg-secondary {
+  background-color: var(--surface-2) !important;
+}
+
+.border-light {
+  border-color: var(--border-light) !important;
+}
+
+/* Custom card styles */
+.card {
+  background-color: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--elev-1);
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--elev-2);
+}
+
+/* Button styles */
+.btn {
+  border-radius: var(--border-radius);
+  transition: var(--transition-fast);
+}
+
+.btn:focus {
+  box-shadow: var(--ring-primary);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-700);
+  border-color: var(--primary-700);
+}
+
+.btn-success {
+  background-color: var(--success);
+  border-color: var(--success);
+}
+
+.btn-success:hover {
+  background-color: var(--success-700);
+  border-color: var(--success-700);
+}
+
+.btn-warning {
+  background-color: var(--warning);
+  border-color: var(--warning);
+}
+
+.btn-warning:hover {
+  background-color: var(--warning-700);
+  border-color: var(--warning-700);
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-danger:hover {
+  background-color: var(--danger-700);
+  border-color: var(--danger-700);
+}
+
+/* Form controls */
+.form-control {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--border-radius);
+}
+
+.form-control:focus {
+  background-color: var(--surface-2);
+  border-color: var(--primary);
+  color: var(--text-primary);
+  box-shadow: var(--ring-primary);
+}
+
+/* Loading spinner */
+.spinner-border {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .notification-container {
+    left: 1rem;
+    right: 1rem;
+    top: 1rem;
+  }
+  
+  .notification-container .alert {
+    min-width: unset;
+  }
+}

@@ -1,0 +1,14 @@
+/* App-specific styles */
+.app {
+  min-height: 100vh;
+  background: 
+    radial-gradient(1200px 800px at 80% -10%, rgba(37, 99, 235, 0.15), transparent 60%),
+    radial-gradient(900px 600px at -10% 90%, rgba(16, 185, 129, 0.12), transparent 55%),
+    var(--bg-0);
+}
+
+/* Ensure proper styling for the entire app */
+body {
+  background-color: var(--bg-0);
+  color: var(--text-primary);
+}
