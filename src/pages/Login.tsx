@@ -45,6 +45,8 @@ const Login: React.FC = () => {
     }));
   };
 
+  const isDevelopment = process.env.NODE_ENV === 'development' || process.env.REACT_APP_DEMO_MODE === 'true';
+
   const fillDemoCredentials = (type: 'police' | 'admin') => {
     if (type === 'police') {
       setCredentials({
@@ -54,8 +56,8 @@ const Login: React.FC = () => {
       });
     } else {
       setCredentials({
-        username: 'admin',
-        password: 'Check server logs',
+        username: 'superadmin',
+        password: isDevelopment ? '_V01cBBwNiMmLgQsGbIj_g' : '',
         accessType: 'admin'
       });
     }
@@ -223,8 +225,8 @@ const Login: React.FC = () => {
                       <div className="mb-4">
                         <h6 className="text-dark">Administrator</h6>
                         <div className="small mb-2">
-                          <div><strong>Username:</strong> admin</div>
-                          <div><strong>Password:</strong> Check server logs</div>
+                          <div><strong>Username:</strong> superadmin</div>
+                          <div><strong>Password:</strong> {isDevelopment ? '_V01cBBwNiMmLgQsGbIj_g' : 'Contact system admin'}</div>
                         </div>
                         <button
                           type="button"
